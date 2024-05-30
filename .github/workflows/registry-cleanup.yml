@@ -6,7 +6,8 @@ on:
     types: [closed]
 
 env:
-  PR_NUMBER: ${{ github.event.number || -1 }}
+  PR_NUMBER: ${{ github.event.number || 0 }}
+  IMAGE_NAME: weather-api
 
 jobs:
   clean:
@@ -16,9 +17,28 @@ jobs:
       - name: Merge Notice
         if: ${{ github.event.pull_request.merged }}
         run: echo "PR-${{ env.PR_NUMBER }} was merged"
-      
-      # https://github.com/camargo/delete-untagged-action
+
+      # https://github.com/leadsforce/action-cleanup-package
+      - name: Delete PR Image
+        uses: chipkent/action-cleanup-package@v1.0.1
+        if: ${{ github.event.pull_request.merged }}
+        with:
+          package-name: ${{ env.IMAGE_NAME }}
+          tag: pr-${{ env.PR_NUMBER }}
+          github-token: ${{ secrets.DELETE_PACKAGES_TOKEN }}
+        
       - name: Clean untagged images
+        uses: actions/delete-package-versions@v5
+        with: 
+          package-name: ${{ env.IMAGE_NAME }}
+          package-type: 'container'
+          min-versions-to-keep: 0
+          delete-only-untagged-versions: 'true'
+          token: ${{ secrets.DELETE_PACKAGES_TOKEN }}
+
+      # https://github.com/camargo/delete-untagged-action
+      - name: Clean untagged images other
+        if: ${{ false }}
         uses: camargo/delete-untagged-action@v1
         with:
           github-token: ${{ secrets.DELETE_PACKAGES_TOKEN }}
