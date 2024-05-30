@@ -126,11 +126,3 @@ jobs:
           echo "$REGISTRY_TOKEN" | docker login ${{ env.IMAGE_REGISTRY }} -u ${{ github.actor }} --password-stdin
           docker push ${{ env.IMAGE_TAG }}
           docker logout
-
-      # https://github.com/camargo/delete-untagged-action
-      - name: Clean untagged images
-        uses: camargo/delete-untagged-action@v1
-        with:
-          github-token: ${{ secrets.DELETE_PACKAGES_TOKEN }}
-          personal-account: true
-          package-name: weather-api
