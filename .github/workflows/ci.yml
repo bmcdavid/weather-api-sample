@@ -1,0 +1,136 @@
+name: CI Build
+on:
+  push:
+    paths-ignore:
+      - '*.md'
+    branches:
+      - main
+  pull_request:
+    #types: [review_requested, ready_for_review]
+    paths-ignore:
+      - '*.md'
+    branches:
+      - main
+
+env:
+  PR_NUMBER: ${{ github.event.number }}
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+  IMAGE_REGISTRY: ghcr.io
+  IMAGE_NAME: bmcdavid/weather-api
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    # https://github.com/dorny/test-reporter/issues/149
+    permissions:
+      contents: read
+      checks: write
+      statuses: write
+      pull-requests: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker
+        uses: crazy-max/ghaction-setup-docker@v3
+        with:
+          version: latest
+          channel: stable
+
+      - name: Display Versions
+        id: versionInfo
+        run: |
+          dotnet --version
+          dotnet build --version
+          docker --version
+          docker compose version
+          node --version
+          npm --version
+
+      - name: Set Docker meta information (w/ Tag)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+
+      - name: Create Image Tag
+        id: tag-image
+        run: |
+          echo "IMAGE_TAG=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DOCKER_METADATA_OUTPUT_VERSION }}" >> "$GITHUB_ENV"
+
+      - name: Build and Test
+        id: build
+        run: |
+          docker compose -p weather build --pull --build-arg GIT_BRANCH=${{ env.BRANCH_NAME }} --build-arg GIT_HASH=${{ github.sha }} --build-arg BUILD_NUMBER=${{ github.run_number }}.${{ github.run_attempt }} api api-tests
+          docker compose -p weather -f docker-compose.yml run --rm api-tests
+          docker tag weather-api ${{ env.IMAGE_TAG }}
+
+      - name: Test Results
+        uses: dorny/test-reporter@v1
+        if: steps.unit_tests.outcome != 'skipped'
+        with:
+          name: Test Results
+          path: "TestResults/*.trx"
+          reporter: dotnet-trx
+          list-suites: failed
+          list-tests: failed
+          fail-on-error: true
+
+      # Remove the dcproj to fix dotnet tool install
+      - name: Install dotnet-coverage and merge
+        run: |
+          sudo rm -f *.dcproj
+          sudo chmod -R 777 TestResults/
+          dotnet tool install --global dotnet-coverage
+          dotnet-coverage merge -o TestResults/merged-coverage.xml -f cobertura TestResults/**/*.xml
+
+      - name: Upload Code Coverage
+        uses: actions/upload-artifact@v4
+        if: ${{ false }} # disables step
+        with:
+          name: my-artifact
+          path: TestResults/merged-coverage.xml
+    
+      # https://github.com/marketplace/actions/code-coverage-summary
+      - name: Code Coverage Report
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          #filename: TestResults/**/coverage.cobertura.xml
+          filename: TestResults/merged-coverage.xml
+          badge: true
+          fail_below_min: true
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: false
+          indicators: true
+          output: both
+          thresholds: '80 90'
+
+      - name: Add Coverage PR Comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: github.event_name == 'pull_request'
+        with:
+          recreate: true
+          path: code-coverage-results.md
+
+      - name: Login and Push Container Registry
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$REGISTRY_TOKEN" | docker login ${{ env.IMAGE_REGISTRY }} -u ${{ github.actor }} --password-stdin
+          docker push ${{ env.IMAGE_TAG }}
+          docker logout
+
+      # https://github.com/camargo/delete-untagged-action
+      - name: Clean untagged images
+        uses: camargo/delete-untagged-action@v1
+        with:
+          github-token: ${{ secrets.DELETE_PACKAGES_TOKEN }}
+          personal-account: true
+          package-name: weather-api
