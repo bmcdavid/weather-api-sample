@@ -1,0 +1,18 @@
+{
+  "profiles": {
+    "Docker Compose": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "composeLaunchAction": "LaunchBrowser",
+      "composeLaunchServiceName": "api",
+      "composeLaunchUrl": "{Scheme}://localhost:{ServicePort}/api/health",
+      "serviceActions": {
+        "api": "StartDebugging",
+        "api-tests": "DoNotStart",
+        "grpc-tests": "DoNotStart",
+        "grpc-tests-init": "DoNotStart",
+        "mssql-db": "StartWithoutDebugging"
+      }
+    }
+  }
+}

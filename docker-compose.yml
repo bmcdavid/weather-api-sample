@@ -1,0 +1,58 @@
+services:
+    api:
+        build:
+            context: .
+            dockerfile: src/Api/Dockerfile
+        restart: "no"
+        environment:
+            BUILD_INFO: "docker-compose-build"
+        env_file:
+            - ./shared.env
+        healthcheck:
+          test: wget --no-verbose --tries=1 --spider http://127.0.0.1/api/health || exit 1
+          interval: 25s
+          timeout: 10s
+          retries: 30
+          start_period: 20s
+        ports:
+            - ${API_PORT1:-40000}:80
+            - ${API_PORT2:-40100}:9000
+        depends_on:
+            mssql-db:
+              condition: service_healthy
+
+    api-tests:
+        build:
+            context: .
+            dockerfile: src/Api/Dockerfile
+            target: test
+        environment:
+            BUILD_INFO: "tests"
+            HostingOptions__AppHostUri: "http://api:80"
+            HostingOptions__DatabaseEnabled: "true"
+            HostingOptions__HttpRequestsEnabled: "true"
+            LOGGING__LOGLEVEL__DEFAULT: "Critical"
+        env_file:
+            - ./shared.env
+        depends_on:
+            api:
+                condition: service_healthy
+        volumes:
+            - ./TestResults:/code/tests/Tests/TestResults
+    mssql-db:
+        image: mcr.microsoft.com/mssql/server
+        ports:
+            - ${API_MSSQL_PORT:-40433}:1433
+        user: root
+        healthcheck:
+          test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-U", "sa", "-P", "Password1", "-Q", "select 1"]
+          interval: 3s
+          retries: 25   
+        environment:
+            SA_PASSWORD: "Password1"
+            ACCEPT_EULA: "Y"
+        volumes:
+            -  mssql_data:/var/opt/mssql/data
+
+volumes:
+    mssql_data:

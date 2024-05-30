@@ -1,0 +1,62 @@
+<Project>
+  <PropertyGroup>
+    <ServiceName>Weather</ServiceName>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <NullableReferenceTypes>true</NullableReferenceTypes>
+    <NullableContextOptions>enable</NullableContextOptions>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisMode>All</AnalysisMode>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);NU1602;NU1603;NU1604;NU1608</NoWarn>
+    <CurrentYear>$([System.DateTime]::UtcNow.ToString(yyyy))</CurrentYear>
+    <CurrentTime>$([System.DateTime]::UtcNow.ToString(u))</CurrentTime>
+    <CIBuildNumber>0</CIBuildNumber>
+    <RepositoryBranch>No Branch Set</RepositoryBranch>
+    <RepositoryCommit>No Commit Set</RepositoryCommit>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageFloatingVersionsEnabled>true</CentralPackageFloatingVersionsEnabled>
+
+    <!--Set overrides via properties set from build-arg from docker-compose-->
+    <CIBuildNumber Condition="'$(BUILD_NUMBER)' != ''">$(BUILD_NUMBER)</CIBuildNumber>
+    <RepositoryBranch Condition="'$(GIT_BRANCH)' != ''">$(GIT_BRANCH)</RepositoryBranch>
+    <RepositoryCommit Condition="'$(GIT_HASH)' != ''">$(GIT_HASH)</RepositoryCommit>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" />
+    <PackageReference Update="Microsoft.VisualStudio.Threading.Analyzers">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>$(ServiceName).Tests</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>$(ServiceName).Api</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsTestProject)' != 'true'">
+    <AssemblyAttribute Include="Weather.Contracts.BuildInfoAttribute">
+      <_Parameter1>BuildDateUtc</_Parameter1>
+      <_Parameter2>$(CurrentTime)</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="Weather.Contracts.BuildInfoAttribute">
+      <_Parameter1>BuildNumber</_Parameter1>
+      <_Parameter2>$(CIBuildNumber)</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="Weather.Contracts.BuildInfoAttribute">
+      <_Parameter1>GitBranch</_Parameter1>
+      <_Parameter2>$(RepositoryBranch)</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="Weather.Contracts.BuildInfoAttribute">
+      <_Parameter1>GitHash</_Parameter1>
+      <_Parameter2>$(RepositoryCommit)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+</Project>

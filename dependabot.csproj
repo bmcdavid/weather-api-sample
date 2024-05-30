@@ -1,0 +1,7 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <!-- This project is a work around for dependabot issue https://github.com/dependabot/dependabot-core/issues/5635 -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <UserSecretsId>dce595a3-5a0d-478b-9542-a2ac03541f00</UserSecretsId>
+  </PropertyGroup>
+</Project>
