@@ -9,7 +9,7 @@ namespace App.Api.Features.AppDetails;
 public class AppInfoController : ControllerBase
 {
     [HttpGet]
-    public Task<IReadOnlyCollection<string>> Index()
+    public Task<IReadOnlyCollection<string>> Get()
     {
         var items = new List<string>();
         var buildInfo = Weather.Contracts.BuildInfoAttribute.BuildInfoAttributes;

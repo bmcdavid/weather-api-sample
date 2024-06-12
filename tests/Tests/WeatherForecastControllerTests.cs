@@ -8,7 +8,7 @@ public class WeatherForecastControllerTests
     private Mock<ILogger<WeatherForecastController>> logger = new();
 
     [Fact]
-    public void Test1()
+    public void ShouldGetForecasts()
     {
         var controller = new WeatherForecastController(logger.Object);
 
