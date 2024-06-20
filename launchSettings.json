@@ -9,8 +9,6 @@
       "serviceActions": {
         "api": "StartDebugging",
         "api-tests": "DoNotStart",
-        "grpc-tests": "DoNotStart",
-        "grpc-tests-init": "DoNotStart",
         "mssql-db": "StartWithoutDebugging"
       }
     }

@@ -8,7 +8,7 @@
     <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
     <DockerServiceUrl>{Scheme}://localhost:{ServicePort}/api/health</DockerServiceUrl>
     <DockerServiceName>api</DockerServiceName>
-    <DockerComposeProjectName>promotions</DockerComposeProjectName>
+    <DockerComposeProjectName>weather</DockerComposeProjectName>
   </PropertyGroup>
   <ItemGroup>
     <None Include="docker-compose.override.yml">
