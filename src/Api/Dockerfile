@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS base
+FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS base
 WORKDIR /app
 # https://stackoverflow.com/a/74939792
 RUN apk add --no-cache icu-libs icu-data-full tzdata
